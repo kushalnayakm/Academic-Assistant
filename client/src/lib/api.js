@@ -13,4 +13,11 @@ api.interceptors.response.use((r) => r, (error) => {
   return Promise.reject(error);
 });
 export const errMsg = (e) => e.response?.data?.message || (e.code === 'ERR_NETWORK' ? 'Cannot reach the server. Is the backend running on port 5000?' : e.message);
+export const errMeta = (e) => ({
+  message: errMsg(e),
+  retryable: Boolean(e.response?.data?.retryable),
+  code: e.response?.data?.code || null,
+  operation: e.response?.data?.operation || null,
+  status: e.response?.status || null,
+});
 export default api;

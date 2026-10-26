@@ -5,7 +5,6 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true, select: false },
   course: { type: String, default: '' },
   institution: { type: String, default: '' },
-  vectorStoreId: { type: String, default: null },
   resetTokenHash: { type: String, select: false },
   resetTokenExpiry: { type: Date, select: false },
 }, { timestamps: true });

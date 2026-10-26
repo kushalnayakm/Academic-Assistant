@@ -5,7 +5,7 @@ const docSchema = new mongoose.Schema({
   fileType: { type: String, required: true },
   mimeType: String,
   size: { type: Number, required: true },
-  openaiFileId: { type: String, default: null },
+  chunkCount: { type: Number, default: 0 },
   status: { type: String, enum: ['Processing', 'Processed', 'Failed'], default: 'Processing' },
   error: { type: String, default: '' },
 }, { timestamps: true });

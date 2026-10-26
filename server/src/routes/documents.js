@@ -4,7 +4,7 @@ import path from 'path';
 import Document from '../models/Document.js';
 import { protect } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
-import { indexDocument, deleteOpenAIFile } from '../services/openai.js';
+import { indexDocument, deleteDocumentChunks } from '../services/rag.js';
 
 const router = express.Router();
 router.use(protect);
@@ -19,20 +19,37 @@ router.post('/', (req, res) => {
     if (err) return res.status(400).json({ message: err.code === 'LIMIT_FILE_SIZE' ? 'File is too large. Maximum size is 10 MB.' : err.message });
     if (!req.file) return res.status(400).json({ message: 'Please choose a PDF, DOCX or TXT file.' });
     const doc = await Document.create({
-      user: req.user._id, originalName: req.file.originalname,
+      user: req.user._id,
+      originalName: req.file.originalname,
       fileType: path.extname(req.file.originalname).replace('.', '').toUpperCase(),
-      mimeType: req.file.mimetype, size: req.file.size, status: 'Processing',
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      status: 'Processing',
     });
+    let indexErr = null;
     try {
-      doc.openaiFileId = await indexDocument(req.user, req.file.path, req.file.originalname);
+      doc.chunkCount = await indexDocument(req.user, req.file.path, req.file.originalname, doc._id);
       doc.status = 'Processed';
+      doc.error = '';
     } catch (e) {
-      doc.status = 'Failed'; doc.error = e.message;
+      indexErr = e;
+      doc.status = 'Failed';
+      doc.error = e.message || 'Indexing failed.';
+      doc.chunkCount = 0;
+      await deleteDocumentChunks(doc._id);
     } finally {
       await doc.save();
-      fs.unlink(req.file.path, () => {}); // file now lives in OpenAI; don't keep local copy
+      fs.unlink(req.file.path, () => {});
     }
-    if (doc.status === 'Failed') return res.status(502).json({ message: `Uploaded but indexing failed: ${doc.error}`, document: doc });
+    if (doc.status === 'Failed') {
+      return res.status(indexErr?.status || 502).json({
+        message: `Upload saved, but indexing failed: ${doc.error}`,
+        code: indexErr?.code || 'index_failed',
+        retryable: Boolean(indexErr?.retryable),
+        operation: indexErr?.operation || 'embedding',
+        document: doc,
+      });
+    }
     res.status(201).json({ document: doc });
   });
 });
@@ -40,7 +57,7 @@ router.post('/', (req, res) => {
 router.delete('/:id', async (req, res) => {
   const doc = await Document.findOne({ _id: req.params.id, user: req.user._id });
   if (!doc) return res.status(404).json({ message: 'Document not found.' });
-  await deleteOpenAIFile(req.user, doc.openaiFileId);
+  await deleteDocumentChunks(doc._id);
   await doc.deleteOne();
   res.json({ message: 'Document deleted.' });
 });

@@ -1,30 +1,74 @@
 import { Upload, MessageCircleQuestion, Zap, GraduationCap } from 'lucide-react';
 import { BooksIllustration } from './ui';
 
+const features = [
+  { icon: Upload, label: 'Upload Documents' },
+  { icon: MessageCircleQuestion, label: 'Ask Questions' },
+  { icon: Zap, label: 'Get Instant Answers' },
+];
+
+function BrandMark({ light = false }) {
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <span className={`shrink-0 rounded-xl p-2 ${light ? 'border border-white/20 bg-white/15' : 'border border-glow/20 bg-leaf'}`}>
+        <GraduationCap className={light ? 'text-white' : 'text-glow'} size={22} />
+      </span>
+      <span className="min-w-0">
+        <span className={`block truncate font-heading text-[15px] font-bold leading-tight ${light ? 'text-white' : 'text-mist'}`}>
+          Academic Assistant
+        </span>
+        <span className={`block truncate text-[10px] ${light ? 'text-white/80' : 'text-soft'}`}>
+          Your University Info, Simplified
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Auth shell:
+ * - < xl: compact green header + centered form (no tall stacked promo)
+ * - >= xl: two equal-height columns inside 100dvh; each column scrolls if needed
+ */
 export default function AuthLayout({ heading, subheading, children, showBooks = false }) {
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[42%_58%] bg-white">
-      {/* Left navy panel — matches reference */}
-      <aside className="relative bg-navy text-white px-7 sm:px-10 py-8 flex flex-col overflow-hidden">
-        <div className="absolute -right-20 -bottom-24 w-72 h-72 rounded-full bg-accent/20 blur-2xl" />
-        <div className="absolute right-8 top-1/3 opacity-[.07] pointer-events-none"><GraduationCap size={220} /></div>
-        <div className="relative flex items-center gap-2.5">
-          <span className="bg-white/10 border border-white/15 rounded-xl p-2"><GraduationCap size={26} /></span>
-          <span><span className="block font-heading font-bold text-[17px] leading-tight">Academic Assistant</span><span className="block text-[10px] text-blue-200">Your University Info, Simplified</span></span>
+    <div className="box-border flex min-h-dvh w-full flex-col bg-night bg-leaf-shape xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+      {/* Mobile / tablet / laptop compact header */}
+      <header className="box-border w-full min-w-0 shrink-0 bg-glow px-4 py-4 text-white sm:px-6 xl:hidden">
+        <BrandMark light />
+        <p className="mt-3 text-sm leading-snug text-white/90 line-clamp-2">{subheading}</p>
+      </header>
+
+      {/* Desktop promotional column */}
+      <aside className="relative hidden min-h-0 min-w-0 flex-col overflow-hidden bg-glow px-8 py-8 text-white xl:flex 2xl:px-12 2xl:py-10">
+        <div className="pointer-events-none absolute -right-8 -bottom-12 h-48 w-48 rounded-full bg-violet/25 blur-2xl" aria-hidden />
+        <BrandMark light />
+        <div className="relative my-auto max-w-md py-6">
+          <h1 className="font-heading text-4xl font-bold leading-[1.15] 2xl:text-[42px]">{heading}</h1>
+          <p className="mt-4 text-sm leading-relaxed text-white/85">{subheading}</p>
+          {showBooks && (
+            <div className="mt-6">
+              <BooksIllustration className="h-auto w-full max-w-[12rem]" />
+            </div>
+          )}
         </div>
-        <div className="relative my-10 lg:my-auto max-w-sm">
-          <h1 className="font-heading text-4xl sm:text-[42px] font-bold leading-[1.15]">{heading}</h1>
-          <p className="text-blue-100/85 text-sm leading-relaxed mt-4">{subheading}</p>
-          {showBooks && <div className="mt-6 hidden sm:block"><BooksIllustration className="w-52" /></div>}
-        </div>
-        <div className="relative grid grid-cols-3 gap-3 border-t border-white/15 pt-5 mt-auto">
-          {[{ icon: Upload, label: 'Upload Documents' }, { icon: MessageCircleQuestion, label: 'Ask Questions' }, { icon: Zap, label: 'Get Instant Answers' }].map(({ icon: Icon, label }) => (
-            <div key={label} className="text-center"><span className="mx-auto w-10 h-10 rounded-full bg-white/10 flex items-center justify-center mb-1.5"><Icon size={17} /></span><span className="block text-[10px] text-blue-100 leading-tight">{label}</span></div>
+        <div className="relative mt-4 grid shrink-0 grid-cols-3 gap-3 border-t border-white/20 pt-5">
+          {features.map(({ icon: Icon, label }) => (
+            <div key={label} className="min-w-0 text-center">
+              <span className="mx-auto mb-1.5 flex h-10 w-10 items-center justify-center rounded-full bg-white/15">
+                <Icon size={16} />
+              </span>
+              <span className="block text-[10px] leading-tight text-white/80">{label}</span>
+            </div>
           ))}
         </div>
       </aside>
-      <main className="flex items-start lg:items-center justify-center px-5 sm:px-10 py-10 bg-white">
-        <div className="w-full max-w-[430px]">{children}</div>
+
+      {/* Form column */}
+      <main className="box-border flex min-h-0 min-w-0 flex-1 flex-col justify-center px-4 py-6 sm:px-6 sm:py-8 xl:overflow-y-auto xl:px-10 xl:py-8">
+        <div className="card box-border mx-auto w-full min-w-0 max-w-md p-4 sm:p-6 md:p-7">
+          {children}
+        </div>
       </main>
     </div>
   );
